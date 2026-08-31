@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Vasooli</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: #F5F6FA;
+      margin: 0;
+      padding: 0;
+      color: #1A1A2E;
+    }
+    .hero {
+      background: linear-gradient(135deg, #E85D4C 0%, #F5A623 100%);
+      color: white;
+      padding: 50px 30px 60px;
+    }
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: 34px;
+    }
+    .hero p {
+      margin: 0;
+      font-size: 16px;
+      opacity: 0.9;
+      max-width: 650px;
+    }
+    .hero .badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.2);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      margin-bottom: 14px;
+      letter-spacing: 0.5px;
+    }
+    .container {
+      max-width: 1100px;
+      margin: -30px auto 0;
+      padding: 0 30px 40px;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .card {
+      background: white;
+      border-radius: 14px;
+      padding: 22px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    }
+    .card .icon { font-size: 20px; margin-bottom: 8px; }
+    .card .label {
+      font-size: 13px;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .card .value {
+      font-size: 26px;
+      font-weight: 800;
+      color: #1A1A2E;
+      margin-top: 6px;
+    }
+    .table-wrap {
+      background: white;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      background: #1A1A2E;
+      color: white;
+      text-align: left;
+      padding: 14px 12px;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
+    }
+    tr:hover { background: #F5F6FA; }
+    .conf-high { color: #1a9c4b; font-weight: 700; }
+    .conf-medium { color: #d68a10; font-weight: 700; }
+    .conf-low { color: #d13c3c; font-weight: 700; }
+  </style>
+</head>
+<body>
+
+  <div class="hero">
+    <div class="badge">RAZORPAY BUILDATHON · TRACK 3 · AI REVENUE RECOVERY</div>
+    <h1>Vasooli</h1>
+    <p>AI-powered B2B receivables recovery — classifies debtor responses and scores promise-to-pay confidence, so businesses know which overdue invoices to chase harder and which to trust.</p>
+  </div>
+
+  <div class="container">
+
+    <div id="summary"></div>
+
+    <div class="table-wrap">
+      <table id="invoiceTable">
+        <thead>
+          <tr>
+            <th>Invoice ID</th>
+            <th>Business</th>
+            <th>Amount</th>
+            <th>Days Overdue</th>
+            <th>Debtor Response</th>
+            <th>AI Classification</th>
+            <th>Confidence</th>
+          </tr>
+        </thead>
+        <tbody id="invoiceBody">
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+
+</body>
+</html>
