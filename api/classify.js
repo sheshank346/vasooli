@@ -25,14 +25,19 @@ export default async function handler(req, res) {
     "{\"category\": \"one_of_the_four_categories\", \"confidence\": number, \"reasoning\": \"one short sentence explaining why\"}";
 
   try {
+        const requestBody = JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }]
+    });
+
     const geminiResponse = await fetch(
       "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=" + process.env.GEMINI_API_KEY,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
-        })
+        headers: {
+          "Content-Type": "application/json",
+          "Content-Length": Buffer.byteLength(requestBody).toString()
+        },
+        body: requestBody
       }
     );
 
