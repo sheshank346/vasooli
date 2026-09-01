@@ -26,7 +26,7 @@ export default async function handler(req, res) {
 
   const options = {
     hostname: "generativelanguage.googleapis.com",
-        path: "/v1beta/models/gemini-3.6-flash:generateContent?key=" + encodeURIComponent(process.env.GEMINI_API_KEY),
+    path: "/v1beta/models/gemini-3.6-flash:generateContent?key=" + encodeURIComponent(process.env.GEMINI_API_KEY),
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -45,7 +45,7 @@ export default async function handler(req, res) {
     request.end();
   });
 
-   try {
+  try {
     const rawData = await geminiPromise;
 
     let parsedData;
@@ -65,3 +65,4 @@ export default async function handler(req, res) {
   } catch (error) {
     res.status(500).json({ reply: "Sorry, I couldn't respond right now.", details: error.message });
   }
+}
