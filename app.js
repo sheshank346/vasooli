@@ -12,8 +12,12 @@ async function classifyResponse(record) {
       })
     });
     const data = await response.json();
+    if (data.category === "unknown") {
+      console.log("DEBUG classify error:", JSON.stringify(data));
+    }
     return data;
   } catch (error) {
+    console.log("DEBUG catch error:", error.message);
     return { category: "unknown", confidence: 0, reasoning: "Classification unavailable." };
   }
 }
