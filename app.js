@@ -39,7 +39,7 @@ async function renderTable() {
     totalOverdue += record.amount;
 
     let result;
-    if (i < 10) {
+    if (false) {
       result = await classifyResponse(record);
     } else {
       // Use pre-set fallback based on true_category for remaining records (demo safety)
