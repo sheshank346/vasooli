@@ -84,14 +84,15 @@
             })
           });
           const data = await response.json();
+          console.log("DEBUG converse response:", JSON.stringify(data));
           aiTextDiv.innerText = data.reply;
 
-          // Speak the reply out loud
           const utterance = new SpeechSynthesisUtterance(data.reply);
           utterance.lang = "en-IN";
           speechSynthesis.speak(utterance);
 
         } catch (error) {
+          console.log("DEBUG converse catch error:", error.message);
           aiTextDiv.innerText = "Error getting AI response.";
         }
 
