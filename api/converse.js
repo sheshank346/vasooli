@@ -45,9 +45,15 @@ export default async function handler(req, res) {
     request.end();
   });
 
-  try {
+   try {
     const rawData = await geminiPromise;
-    const parsedData = JSON.parse(rawData);
+
+    let parsedData;
+    try {
+      parsedData = JSON.parse(rawData);
+    } catch (parseErr) {
+      return res.status(500).json({ reply: "Sorry, I couldn't respond right now.", rawResponseText: rawData.substring(0, 500) });
+    }
 
     if (!parsedData.candidates) {
       return res.status(500).json({ reply: "Sorry, I couldn't respond right now.", raw: parsedData });
@@ -59,4 +65,3 @@ export default async function handler(req, res) {
   } catch (error) {
     res.status(500).json({ reply: "Sorry, I couldn't respond right now.", details: error.message });
   }
-}
