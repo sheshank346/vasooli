@@ -3,13 +3,16 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Only POST allowed" });
   }
 
-  const { business_name, amount, days_overdue, debtor_response } = req.body;
+  let body = req.body;
+  if (typeof body === "string") {
+    try {
+      body = JSON.parse(body);
+    } catch (e) {
+      return res.status(400).json({ category: "unknown", confidence: 0, reasoning: "Bad request body", details: e.message });
+    }
+  }
 
-  const prompt = `A B2B invoice is overdue. Details:
-Business: ${business_name}
-Amount: \u20B9${amount}
-Days overdue: ${days_overdue}
-Debtor's response to follow-up: "${debtor_response}"
+  const { business_name, amount, days_overdue, debtor_response } = body;
 
 Classify this response into exactly one category: genuine_promise, evasive, dispute, or already_paid_claim.
 Also give a confidence score from 0-100 for how likely this debtor will actually pay soon.
