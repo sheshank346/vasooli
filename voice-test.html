@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Voice Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 40px; text-align: center; max-width: 700px; margin: 0 auto; }
+    button {
+      font-size: 18px;
+      padding: 15px 30px;
+      border-radius: 10px;
+      background: #E85D4C;
+      color: white;
+      border: none;
+      cursor: pointer;
+      margin: 10px;
+    }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    .box {
+      margin-top: 20px;
+      font-size: 18px;
+      min-height: 60px;
+      border: 1px solid #ccc;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: left;
+    }
+    .label { font-weight: bold; color: #E85D4C; }
+  </style>
+</head>
+<body>
+
+  <h1>Vasooli Voice Test</h1>
+  <p>Simulating a collections call for: <b>Sharma Textiles</b>, ₹70,000 overdue, 60 days</p>
+
+  <button id="startBtn">🎤 Speak (as the debtor)</button>
+
+  <div class="box">
+    <div class="label">You said:</div>
+    <div id="userText">-</div>
+  </div>
+
+  <div class="box">
+    <div class="label">AI Agent replies:</div>
+    <div id="aiText">-</div>
+  </div>
+
+  <script>
+    const startBtn = document.getElementById("startBtn");
+    const userTextDiv = document.getElementById("userText");
+    const aiTextDiv = document.getElementById("aiText");
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      userTextDiv.innerText = "Speech recognition not supported. Use Chrome.";
+    } else {
+      const recognition = new SpeechRecognition();
+      recognition.lang = "en-IN";
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      startBtn.addEventListener("click", () => {
+        startBtn.disabled = true;
+        userTextDiv.innerText = "Listening...";
+        aiTextDiv.innerText = "-";
+        recognition.start();
+      });
+
+      recognition.onresult = async (event) => {
+        const spokenText = event.results[0][0].transcript;
+        userTextDiv.innerText = spokenText;
+        aiTextDiv.innerText = "Thinking...";
+
+        try {
+          const response = await fetch("/api/converse", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              debtor_message: spokenText,
+              business_name: "Sharma Textiles",
+              amount: 70000,
+              days_overdue: 60
+            })
+          });
+          const data = await response.json();
+          aiTextDiv.innerText = data.reply;
+
+          // Speak the reply out loud
+          const utterance = new SpeechSynthesisUtterance(data.reply);
+          utterance.lang = "en-IN";
+          speechSynthesis.speak(utterance);
+
+        } catch (error) {
+          aiTextDiv.innerText = "Error getting AI response.";
+        }
+
+        startBtn.disabled = false;
+      };
+
+      recognition.onerror = (event) => {
+        userTextDiv.innerText = "Error: " + event.error;
+        startBtn.disabled = false;
+      };
+    }
+  </script>
+
+</body>
+</html>
