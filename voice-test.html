@@ -91,10 +91,12 @@
           aiTextDiv.innerText = data.reply;
 
           console.log("DEBUG about to speak:", data.reply);
-          const utterance = new SpeechSynthesisUtterance(data.reply);
+                    const utterance = new SpeechSynthesisUtterance(data.reply);
           utterance.lang = "en-IN";
+          startBtn.disabled = true;
           utterance.onstart = () => console.log("DEBUG speech started for:", data.reply);
-          utterance.onerror = (e) => console.log("DEBUG speech error:", e.error);
+          utterance.onend = () => { startBtn.disabled = false; };
+          utterance.onerror = (e) => { console.log("DEBUG speech error:", e.error); startBtn.disabled = false; };
           speechSynthesis.speak(utterance);
 
         } catch (error) {
