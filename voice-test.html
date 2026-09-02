@@ -26,12 +26,14 @@
       text-align: left;
     }
     .label { font-weight: bold; color: #E85D4C; }
+    .hint { color: #888; font-size: 14px; margin-top: 20px; }
   </style>
 </head>
 <body>
 
   <h1>Vasooli Voice Test</h1>
-  <p>Simulating a collections call for: <b>Sharma Textiles</b>, ₹70,000 overdue, 60 days</p>
+  <p>Simulating a collections call for: <b>Singh Enterprises</b>, ₹70,000 overdue, 60 days</p>
+  <p class="hint">Use headphones for best results — prevents the mic from picking up the AI's own voice.</p>
 
   <button id="startBtn">🎤 Speak (as the debtor)</button>
 
@@ -67,9 +69,10 @@
         recognition.start();
       });
 
-            recognition.onresult = async (event) => {
-        // Cancel any currently playing or queued speech before starting fresh
+      recognition.onresult = async (event) => {
+        // Stop everything from a previous round before processing this new input
         speechSynthesis.cancel();
+        recognition.stop();
 
         const spokenText = event.results[0][0].transcript;
         userTextDiv.innerText = spokenText;
@@ -81,19 +84,18 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               debtor_message: spokenText,
-              business_name: "Sharma Textiles",
+              business_name: "Singh Enterprises",
               amount: 70000,
               days_overdue: 60
             })
           });
-                    const data = await response.json();
+          const data = await response.json();
           console.log("DEBUG converse response:", JSON.stringify(data));
           aiTextDiv.innerText = data.reply;
 
           console.log("DEBUG about to speak:", data.reply);
-                    const utterance = new SpeechSynthesisUtterance(data.reply);
+          const utterance = new SpeechSynthesisUtterance(data.reply);
           utterance.lang = "en-IN";
-          startBtn.disabled = true;
           utterance.onstart = () => console.log("DEBUG speech started for:", data.reply);
           utterance.onend = () => { startBtn.disabled = false; };
           utterance.onerror = (e) => { console.log("DEBUG speech error:", e.error); startBtn.disabled = false; };
@@ -102,9 +104,8 @@
         } catch (error) {
           console.log("DEBUG converse catch error:", error.message);
           aiTextDiv.innerText = "Error getting AI response.";
+          startBtn.disabled = false;
         }
-
-        startBtn.disabled = false;
       };
 
       recognition.onerror = (event) => {
