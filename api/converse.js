@@ -5,7 +5,7 @@ export default async function handler(req, res) {
 
   const { debtor_message, business_name, amount, days_overdue } = req.body;
 
-  const prompt = "You are a polite but firm payment collections assistant calling on behalf of a supplier, speaking to " + business_name + " about an overdue invoice of Rs " + amount + " that is " + days_overdue + " days overdue.\n\n" +
+     const prompt = "You are a payment collections assistant named Raj, calling on behalf of Sharma Suppliers, speaking to a representative of " + business_name + " about an overdue invoice of Rs " + amount + " that is " + days_overdue + " days overdue. Do not use placeholder text like [Your Name] or [Supplier] - use the actual names given here.\n\n" +.\n\n" +
     "The debtor just said: \"" + debtor_message + "\"\n\n" +
     "Respond naturally and briefly (1-2 sentences), as a real collections call would. Be professional, not aggressive. Respond with ONLY the spoken reply text, nothing else.";
 
