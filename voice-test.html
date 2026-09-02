@@ -33,7 +33,7 @@
 
   <h1>Vasooli Voice Test</h1>
   <p>Simulating a collections call for: <b>Singh Enterprises</b>, ₹70,000 overdue, 60 days</p>
-  <p class="hint">Use headphones for best results — prevents the mic from picking up the AI's own voice.</p>
+  <p class="hint">Use headphones for best results.</p>
 
   <button id="startBtn">🎤 Speak (as the debtor)</button>
 
@@ -52,66 +52,98 @@
     const userTextDiv = document.getElementById("userText");
     const aiTextDiv = document.getElementById("aiText");
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-    if (!SpeechRecognition) {
+    // Hard guard: only one request can be "in flight" at a time
+    let isProcessing = false;
+
+    if (!SpeechRecognitionCtor) {
       userTextDiv.innerText = "Speech recognition not supported. Use Chrome.";
     } else {
-      const recognition = new SpeechRecognition();
-      recognition.lang = "en-IN";
-      recognition.continuous = false;
-      recognition.interimResults = false;
 
-      startBtn.addEventListener("click", () => {
+      function runOneListenCycle() {
+        if (isProcessing) {
+          console.log("DEBUG: blocked re-entrant call, already processing");
+          return;
+        }
+        isProcessing = true;
         startBtn.disabled = true;
         userTextDiv.innerText = "Listening...";
         aiTextDiv.innerText = "-";
-        recognition.start();
-      });
 
-      recognition.onresult = async (event) => {
-        // Stop everything from a previous round before processing this new input
-        speechSynthesis.cancel();
-        recognition.stop();
+        // Create a BRAND NEW recognition object every single time
+        const recognition = new SpeechRecognitionCtor();
+        recognition.lang = "en-IN";
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
 
-        const spokenText = event.results[0][0].transcript;
-        userTextDiv.innerText = spokenText;
-        aiTextDiv.innerText = "Thinking...";
+        let resultHandled = false;
 
-        try {
-          const response = await fetch("/api/converse", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              debtor_message: spokenText,
-              business_name: "Singh Enterprises",
-              amount: 70000,
-              days_overdue: 60
-            })
-          });
-          const data = await response.json();
-          console.log("DEBUG converse response:", JSON.stringify(data));
-          aiTextDiv.innerText = data.reply;
+        recognition.onresult = async (event) => {
+          if (resultHandled) {
+            console.log("DEBUG: duplicate onresult ignored");
+            return;
+          }
+          resultHandled = true;
 
-          console.log("DEBUG about to speak:", data.reply);
-          const utterance = new SpeechSynthesisUtterance(data.reply);
-          utterance.lang = "en-IN";
-          utterance.onstart = () => console.log("DEBUG speech started for:", data.reply);
-          utterance.onend = () => { startBtn.disabled = false; };
-          utterance.onerror = (e) => { console.log("DEBUG speech error:", e.error); startBtn.disabled = false; };
-          speechSynthesis.speak(utterance);
+          const spokenText = event.results[0][0].transcript;
+          userTextDiv.innerText = spokenText;
+          aiTextDiv.innerText = "Thinking...";
 
-        } catch (error) {
-          console.log("DEBUG converse catch error:", error.message);
-          aiTextDiv.innerText = "Error getting AI response.";
+          try {
+            const response = await fetch("/api/converse", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                debtor_message: spokenText,
+                business_name: "Singh Enterprises",
+                amount: 70000,
+                days_overdue: 60
+              })
+            });
+            const data = await response.json();
+            console.log("DEBUG converse response:", JSON.stringify(data));
+            aiTextDiv.innerText = data.reply;
+
+            const utterance = new SpeechSynthesisUtterance(data.reply);
+            utterance.lang = "en-IN";
+            utterance.onend = () => {
+              isProcessing = false;
+              startBtn.disabled = false;
+            };
+            utterance.onerror = () => {
+              isProcessing = false;
+              startBtn.disabled = false;
+            };
+            speechSynthesis.speak(utterance);
+
+          } catch (error) {
+            console.log("DEBUG converse catch error:", error.message);
+            aiTextDiv.innerText = "Error getting AI response.";
+            isProcessing = false;
+            startBtn.disabled = false;
+          }
+        };
+
+        recognition.onerror = (event) => {
+          userTextDiv.innerText = "Error: " + event.error;
+          isProcessing = false;
           startBtn.disabled = false;
-        }
-      };
+        };
 
-      recognition.onerror = (event) => {
-        userTextDiv.innerText = "Error: " + event.error;
-        startBtn.disabled = false;
-      };
+        recognition.onend = () => {
+          // If recognition ended without ever getting a result, release the lock
+          if (!resultHandled) {
+            isProcessing = false;
+            startBtn.disabled = false;
+          }
+        };
+
+        recognition.start();
+      }
+
+      startBtn.addEventListener("click", runOneListenCycle);
     }
   </script>
 
