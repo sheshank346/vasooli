@@ -10,27 +10,26 @@ export default async function handler(req, res) {
     "Respond naturally and briefly (1-2 sentences), as a real collections call would. Be professional, not aggressive. Respond with ONLY the spoken reply text, nothing else.";
 
   try {
-    const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": process.env.GEMINI_API_KEY
-        },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
-        })
-      }
-    );
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + process.env.GROQ_API_KEY
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 150
+      })
+    });
 
     const data = await response.json();
 
-    if (!data.candidates) {
+    if (!data.choices) {
       return res.status(500).json({ reply: "Sorry, I couldn't respond right now.", raw: data });
     }
 
-    const replyText = data.candidates[0].content.parts[0].text.trim();
+    const replyText = data.choices[0].message.content.trim();
     res.status(200).json({ reply: replyText });
 
   } catch (error) {
