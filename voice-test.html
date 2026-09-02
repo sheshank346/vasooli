@@ -67,7 +67,10 @@
         recognition.start();
       });
 
-      recognition.onresult = async (event) => {
+            recognition.onresult = async (event) => {
+        // Cancel any currently playing or queued speech before starting fresh
+        speechSynthesis.cancel();
+
         const spokenText = event.results[0][0].transcript;
         userTextDiv.innerText = spokenText;
         aiTextDiv.innerText = "Thinking...";
