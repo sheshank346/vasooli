@@ -53,7 +53,10 @@
     const aiTextDiv = document.getElementById("aiText");
 
     const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
-
+    // Ensure voices are loaded (some browsers load them asynchronously)
+    speechSynthesis.onvoiceschanged = () => {
+      speechSynthesis.getVoices();
+    };
     // Hard guard: only one request can be "in flight" at a time
     let isProcessing = false;
 
