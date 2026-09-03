@@ -53,10 +53,7 @@
     const aiTextDiv = document.getElementById("aiText");
 
     const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
-    // Ensure voices are loaded (some browsers load them asynchronously)
-    speechSynthesis.onvoiceschanged = () => {
-      speechSynthesis.getVoices();
-    };
+
     // Hard guard: only one request can be "in flight" at a time
     let isProcessing = false;
 
@@ -77,21 +74,34 @@
         // Create a BRAND NEW recognition object every single time
         const recognition = new SpeechRecognitionCtor();
         recognition.lang = "en-IN";
-        recognition.continuous = false;
-        recognition.interimResults = false;
+        recognition.continuous = true;
+        recognition.interimResults = true;
         recognition.maxAlternatives = 1;
 
         let resultHandled = false;
 
         recognition.onresult = async (event) => {
+          // Build the full transcript from all results so far
+          let fullTranscript = "";
+          for (let i = 0; i < event.results.length; i++) {
+            fullTranscript += event.results[i][0].transcript;
+          }
+          userTextDiv.innerText = fullTranscript;
+
+          // Only process once we get a "final" result (not just interim)
+          const lastResult = event.results[event.results.length - 1];
+          if (!lastResult.isFinal) {
+            return;
+          }
+
           if (resultHandled) {
             console.log("DEBUG: duplicate onresult ignored");
             return;
           }
           resultHandled = true;
+          recognition.stop();
 
-          const spokenText = event.results[0][0].transcript;
-          userTextDiv.innerText = spokenText;
+          const spokenText = fullTranscript;
           aiTextDiv.innerText = "Thinking...";
 
           try {
@@ -109,10 +119,9 @@
             console.log("DEBUG converse response:", JSON.stringify(data));
             aiTextDiv.innerText = data.reply;
 
-                        const utterance = new SpeechSynthesisUtterance(data.reply);
+            const utterance = new SpeechSynthesisUtterance(data.reply);
             utterance.lang = "en-IN";
 
-            // Try to pick a male-sounding voice if available
             const voices = speechSynthesis.getVoices();
             const maleVoice = voices.find(v => v.lang.includes("en") && /male/i.test(v.name)) ||
                                voices.find(v => v.name.includes("Google UK English Male")) ||
@@ -121,6 +130,7 @@
             if (maleVoice) {
               utterance.voice = maleVoice;
             }
+
             utterance.onend = () => {
               isProcessing = false;
               startBtn.disabled = false;
@@ -146,7 +156,7 @@
         };
 
         recognition.onend = () => {
-          // If recognition ended without ever getting a result, release the lock
+          // If recognition ended without ever getting a final result, release the lock
           if (!resultHandled) {
             isProcessing = false;
             startBtn.disabled = false;
@@ -155,6 +165,10 @@
 
         recognition.start();
       }
+
+      speechSynthesis.onvoiceschanged = () => {
+        speechSynthesis.getVoices();
+      };
 
       startBtn.addEventListener("click", runOneListenCycle);
     }
