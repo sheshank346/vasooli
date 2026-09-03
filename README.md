@@ -1,4 +1,11 @@
+# Vasooli
 
+**AI-powered B2B receivables recovery agent**
+Built for Razorpay Buildathon — Track 3: AI Revenue Recovery
+
+🔗 **Live Demo:** https://vasooli-alpha.vercel.app
+🎙️ **Voice Demo:** https://vasooli-alpha.vercel.app/voice-test.html *(requires Chrome or Edge, and microphone access)*
+📹 **Video Walkthrough:** https://drive.google.com/file/d/1yzrpJG_CQ1ndLFnKuE5anKEY6whwyS5q/view?usp=sharing
 ## Key Engineering Decisions
 
 - **Fallback classification for demo reliability**: Given free-tier API quota limits, a subset of records use live AI classification while the remainder use consistent, category-matched fallback scores — ensuring the dashboard always displays cleanly regardless of quota state.
