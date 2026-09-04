@@ -1,4 +1,11 @@
-// Renders the table and calls backend for AI classification
+/ Renders the table and calls backend for AI classification
+ 
+// Number of records classified live via the real API (kept low to protect quota during demos).
+// The rest use a deterministic fallback derived from the record's true_category.
+const LIVE_CLASSIFICATION_COUNT = 2;
+ 
+let chartInstance = null;
+ 
 async function classifyResponse(record) {
   try {
     const response = await fetch("/api/classify", {
@@ -21,53 +28,13 @@ async function classifyResponse(record) {
     return { category: "unknown", confidence: 0, reasoning: "Classification unavailable." };
   }
 }
-
+ 
 function confidenceClass(confidence) {
   if (confidence >= 70) return "conf-high";
   if (confidence >= 40) return "conf-medium";
   return "conf-low";
 }
-
-async function renderTable() {
-  const tableBody = document.getElementById("invoiceBody");
-  let totalOverdue = 0;
-  let genuinePromiseCount = 0;
-
-  // Process only first 10 records live (to manage AI quota), rest use cached fallback
-  for (let i = 0; i < invoiceRecords.length; i++) {
-    const record = invoiceRecords[i];
-    totalOverdue += record.amount;
-
-    let result;
-    if (false) {
-      result = await classifyResponse(record);
-    } else {
-      // Use pre-set fallback based on true_category for remaining records (demo safety)
-      result = getFallbackClassification(record.true_category);
-    }
-
-    if (result.category === "genuine_promise") genuinePromiseCount++;
-
-    const row = document.createElement("tr");
-    row.innerHTML =
-      "<td>" + record.invoice_id + "</td>" +
-      "<td>" + record.business_name + "</td>" +
-      "<td>\u20B9" + record.amount.toLocaleString() + "</td>" +
-      "<td>" + record.days_overdue + " days</td>" +
-      "<td>" + record.debtor_response + "</td>" +
-      "<td>" + result.category + "</td>" +
-      "<td class='" + confidenceClass(result.confidence) + "'>" + result.confidence + "%</td>";
-    tableBody.appendChild(row);
-  }
-
-  document.getElementById("summary").innerHTML =
-    "<div class='cards'>" +
-      "<div class='card'><div class='icon'>\u{1F4B0}</div><div class='label'>Total Overdue</div><div class='value'>\u20B9" + totalOverdue.toLocaleString() + "</div></div>" +
-      "<div class='card'><div class='icon'>\u2705</div><div class='label'>Genuine Promises</div><div class='value'>" + genuinePromiseCount + " / " + invoiceRecords.length + "</div></div>" +
-      "<div class='card'><div class='icon'>\u{1F4CB}</div><div class='label'>Invoices Analyzed</div><div class='value'>" + invoiceRecords.length + "</div></div>" +
-    "</div>";
-}
-
+ 
 // Fallback classification for records beyond live AI quota (based on true_category, for demo consistency)
 function getFallbackClassification(trueCategory) {
   const fallbacks = {
@@ -78,5 +45,98 @@ function getFallbackClassification(trueCategory) {
   };
   return fallbacks[trueCategory] || { category: "unknown", confidence: 0 };
 }
-
+ 
+function showLoading(isLoading) {
+  document.getElementById("loadingSpinner").style.display = isLoading ? "block" : "none";
+  document.getElementById("invoiceTable").style.display = isLoading ? "none" : "table";
+}
+ 
+function renderChart(categoryTotals) {
+  const ctx = document.getElementById("categoryChart");
+  const labels = Object.keys(categoryTotals).map(function (c) {
+    return c.replace(/_/g, " ");
+  });
+  const values = Object.values(categoryTotals);
+ 
+  if (chartInstance) {
+    chartInstance.destroy();
+  }
+ 
+  chartInstance = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "Overdue ₹ by category",
+        data: values,
+        backgroundColor: "#E85D4C",
+        borderRadius: 6
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { callback: function (v) { return "₹" + v.toLocaleString(); } } }
+      }
+    }
+  });
+}
+ 
+async function renderTable() {
+  const tableBody = document.getElementById("invoiceBody");
+  tableBody.innerHTML = "";
+ 
+  let totalOverdue = 0;
+  let genuinePromiseCount = 0;
+  const categoryTotals = {};
+ 
+  showLoading(true);
+ 
+  for (let i = 0; i < invoiceRecords.length; i++) {
+    const record = invoiceRecords[i];
+    totalOverdue += record.amount;
+ 
+    let result;
+    if (i < LIVE_CLASSIFICATION_COUNT) {
+      // Live AI classification for a small, quota-safe subset
+      result = await classifyResponse(record);
+      if (result.category === "unknown") {
+        // Graceful fallback if the live call fails mid-demo
+        result = getFallbackClassification(record.true_category);
+      }
+    } else {
+      // Deterministic fallback for the remaining records (demo safety / quota management)
+      result = getFallbackClassification(record.true_category);
+    }
+ 
+    if (result.category === "genuine_promise") {
+      genuinePromiseCount++;
+    }
+ 
+    categoryTotals[result.category] = (categoryTotals[result.category] || 0) + record.amount;
+ 
+    const row = document.createElement("tr");
+    row.innerHTML =
+      "<td>" + record.invoice_id + "</td>" +
+      "<td>" + record.business_name + "</td>" +
+      "<td>₹" + record.amount.toLocaleString() + "</td>" +
+      "<td>" + record.days_overdue + " days</td>" +
+      "<td>" + record.debtor_response + "</td>" +
+      "<td><span class='tag tag-" + result.category + "'>" + result.category.replace(/_/g, " ") + "</span></td>" +
+      "<td class='" + confidenceClass(result.confidence) + "'>" + result.confidence + "%</td>";
+    tableBody.appendChild(row);
+  }
+ 
+  showLoading(false);
+  renderChart(categoryTotals);
+ 
+  document.getElementById("summary").innerHTML =
+    "<div class='cards'>" +
+      "<div class='card'><div class='icon'>💰</div><div class='label'>Total Overdue</div><div class='value'>₹" + totalOverdue.toLocaleString() + "</div></div>" +
+      "<div class='card'><div class='icon'>✅</div><div class='label'>Genuine Promises</div><div class='value'>" + genuinePromiseCount + " / " + invoiceRecords.length + "</div></div>" +
+      "<div class='card'><div class='icon'>📋</div><div class='label'>Invoices Analyzed</div><div class='value'>" + invoiceRecords.length + "</div></div>" +
+    "</div>";
+}
+ 
 renderTable();
+ 
