@@ -2,63 +2,164 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Voice Test</title>
+  <title>Vasooli Voice Agent</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 40px; text-align: center; max-width: 700px; margin: 0 auto; }
-    button {
-      font-size: 18px;
-      padding: 15px 30px;
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: #F5F6FA;
+      margin: 0;
+      padding: 0;
+      color: #1A1A2E;
+    }
+    .hero {
+      background: linear-gradient(135deg, #E85D4C 0%, #F5A623 100%);
+      color: white;
+      padding: 50px 30px 60px;
+      text-align: center;
+    }
+    .hero .badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.2);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      margin-bottom: 14px;
+      letter-spacing: 0.5px;
+    }
+    .hero h1 { margin: 0 0 8px; font-size: 30px; }
+    .hero p { margin: 0; font-size: 15px; opacity: 0.9; }
+
+    .container {
+      max-width: 650px;
+      margin: -30px auto 0;
+      padding: 0 24px 50px;
+    }
+
+    .call-card {
+      background: white;
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+
+    .call-info {
+      display: flex;
+      justify-content: space-between;
+      background: #F5F6FA;
       border-radius: 10px;
-      background: #E85D4C;
+      padding: 14px 18px;
+      margin-bottom: 24px;
+      font-size: 14px;
+    }
+    .call-info div b { color: #1A1A2E; display: block; font-size: 16px; margin-top: 2px; }
+    .call-info div span { color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    #startBtn {
+      font-size: 17px;
+      padding: 16px 36px;
+      border-radius: 50px;
+      background: linear-gradient(135deg, #E85D4C 0%, #F5A623 100%);
       color: white;
       border: none;
       cursor: pointer;
-      margin: 10px;
+      box-shadow: 0 6px 18px rgba(232,93,76,0.35);
+      transition: transform 0.15s ease;
     }
-    button:disabled { background: #ccc; cursor: not-allowed; }
-    .box {
-      margin-top: 20px;
-      font-size: 18px;
-      min-height: 60px;
-      border: 1px solid #ccc;
-      padding: 20px;
-      border-radius: 10px;
+    #startBtn:hover:not(:disabled) { transform: translateY(-2px); }
+    #startBtn:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; }
+
+    .hint { color: #999; font-size: 13px; margin-top: 14px; }
+
+    .transcript-area {
+      margin-top: 28px;
       text-align: left;
     }
-    .label { font-weight: bold; color: #E85D4C; }
-    .hint { color: #888; font-size: 14px; margin-top: 20px; }
+    .bubble {
+      border-radius: 14px;
+      padding: 16px 18px;
+      margin-bottom: 14px;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+    .bubble.user {
+      background: #EEF0FF;
+      border-left: 4px solid #3E51F5;
+    }
+    .bubble.ai {
+      background: #FFF3EC;
+      border-left: 4px solid #E85D4C;
+    }
+    .bubble .who {
+      font-weight: 700;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+      display: block;
+    }
+    .bubble.user .who { color: #3E51F5; }
+    .bubble.ai .who { color: #E85D4C; }
+
+    .pulse {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #E85D4C;
+      margin-right: 6px;
+      animation: pulse 1.2s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.4); opacity: 0.5; }
+      100% { transform: scale(1); opacity: 1; }
+    }
   </style>
 </head>
 <body>
 
-  <h1>Vasooli Voice Test</h1>
-  <p>Simulating a collections call for: <b>Singh Enterprises</b>, ₹70,000 overdue, 60 days</p>
-  <p class="hint">Use headphones for best results.</p>
-
-  <button id="startBtn">🎤 Speak (as the debtor)</button>
-
-  <div class="box">
-    <div class="label">You said:</div>
-    <div id="userText">-</div>
+  <div class="hero">
+    <div class="badge">VASOOLI · LIVE VOICE AGENT</div>
+    <h1>🎙️ AI Collections Call</h1>
+    <p>Speak as the debtor — the AI agent listens, reasons, and responds in real time.</p>
   </div>
 
-  <div class="box">
-    <div class="label">AI Agent replies:</div>
-    <div id="aiText">-</div>
+  <div class="container">
+    <div class="call-card">
+
+      <div class="call-info">
+        <div><span>Business</span><b>Singh Enterprises</b></div>
+        <div><span>Amount Overdue</span><b>₹70,000</b></div>
+        <div><span>Days Overdue</span><b>60</b></div>
+      </div>
+
+      <button id="startBtn">🎤 Speak (as the debtor)</button>
+      <p class="hint">Use headphones for best results</p>
+
+      <div class="transcript-area" id="transcriptArea"></div>
+
+    </div>
   </div>
 
   <script>
     const startBtn = document.getElementById("startBtn");
-    const userTextDiv = document.getElementById("userText");
-    const aiTextDiv = document.getElementById("aiText");
+    const transcriptArea = document.getElementById("transcriptArea");
 
     const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-    // Hard guard: only one request can be "in flight" at a time
     let isProcessing = false;
 
+    function addBubble(who, text) {
+      const div = document.createElement("div");
+      div.className = "bubble " + who;
+      div.innerHTML = "<span class='who'>" + (who === "user" ? "You (Debtor)" : "AI Agent") + "</span>" + text;
+      transcriptArea.appendChild(div);
+      return div;
+    }
+
     if (!SpeechRecognitionCtor) {
-      userTextDiv.innerText = "Speech recognition not supported. Use Chrome.";
+      addBubble("ai", "Speech recognition not supported. Please use Chrome or Edge.");
     } else {
 
       function runOneListenCycle() {
@@ -68,10 +169,8 @@
         }
         isProcessing = true;
         startBtn.disabled = true;
-        userTextDiv.innerText = "Listening...";
-        aiTextDiv.innerText = "-";
+        startBtn.innerHTML = "<span class='pulse'></span> Listening...";
 
-        // Create a BRAND NEW recognition object every single time
         const recognition = new SpeechRecognitionCtor();
         recognition.lang = "en-IN";
         recognition.continuous = true;
@@ -79,20 +178,21 @@
         recognition.maxAlternatives = 1;
 
         let resultHandled = false;
+        let userBubble = null;
 
         recognition.onresult = async (event) => {
-          // Build the full transcript from all results so far
           let fullTranscript = "";
           for (let i = 0; i < event.results.length; i++) {
             fullTranscript += event.results[i][0].transcript;
           }
-          userTextDiv.innerText = fullTranscript;
-
-          // Only process once we get a "final" result (not just interim)
-          const lastResult = event.results[event.results.length - 1];
-          if (!lastResult.isFinal) {
-            return;
+          if (!userBubble) {
+            userBubble = addBubble("user", fullTranscript);
+          } else {
+            userBubble.innerHTML = "<span class='who'>You (Debtor)</span>" + fullTranscript;
           }
+
+          const lastResult = event.results[event.results.length - 1];
+          if (!lastResult.isFinal) return;
 
           if (resultHandled) {
             console.log("DEBUG: duplicate onresult ignored");
@@ -102,7 +202,7 @@
           recognition.stop();
 
           const spokenText = fullTranscript;
-          aiTextDiv.innerText = "Thinking...";
+          startBtn.innerHTML = "🤔 Thinking...";
 
           try {
             const response = await fetch("/api/converse", {
@@ -117,61 +217,58 @@
             });
             const data = await response.json();
             console.log("DEBUG converse response:", JSON.stringify(data));
-            aiTextDiv.innerText = data.reply;
+            addBubble("ai", data.reply);
 
             const utterance = new SpeechSynthesisUtterance(data.reply);
             utterance.lang = "en-IN";
 
             const voices = speechSynthesis.getVoices();
-            console.log("DEBUG available voices:", voices.map(v => v.name + " (" + v.lang + ")").join(", "));
-
             const maleVoice = voices.find(v => /male/i.test(v.name) && !/female/i.test(v.name)) ||
                                voices.find(v => /david|mark|daniel|alex|rishi|ravi/i.test(v.name)) ||
                                voices.find(v => v.lang === "en-IN" || v.lang === "hi-IN") ||
                                voices[0];
-            if (maleVoice) {
-              utterance.voice = maleVoice;
-            }
+            if (maleVoice) utterance.voice = maleVoice;
 
             utterance.onend = () => {
               isProcessing = false;
               startBtn.disabled = false;
+              startBtn.innerHTML = "🎤 Speak (as the debtor)";
             };
             utterance.onerror = () => {
               isProcessing = false;
               startBtn.disabled = false;
+              startBtn.innerHTML = "🎤 Speak (as the debtor)";
             };
             speechSynthesis.speak(utterance);
 
           } catch (error) {
             console.log("DEBUG converse catch error:", error.message);
-            aiTextDiv.innerText = "Error getting AI response.";
+            addBubble("ai", "Sorry, I couldn't respond right now.");
             isProcessing = false;
             startBtn.disabled = false;
+            startBtn.innerHTML = "🎤 Speak (as the debtor)";
           }
         };
 
         recognition.onerror = (event) => {
-          userTextDiv.innerText = "Error: " + event.error;
+          addBubble("ai", "Error: " + event.error);
           isProcessing = false;
           startBtn.disabled = false;
+          startBtn.innerHTML = "🎤 Speak (as the debtor)";
         };
 
         recognition.onend = () => {
-          // If recognition ended without ever getting a final result, release the lock
           if (!resultHandled) {
             isProcessing = false;
             startBtn.disabled = false;
+            startBtn.innerHTML = "🎤 Speak (as the debtor)";
           }
         };
 
         recognition.start();
       }
 
-      speechSynthesis.onvoiceschanged = () => {
-        speechSynthesis.getVoices();
-      };
-
+      speechSynthesis.onvoiceschanged = () => { speechSynthesis.getVoices(); };
       startBtn.addEventListener("click", runOneListenCycle);
     }
   </script>
