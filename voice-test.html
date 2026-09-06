@@ -162,15 +162,20 @@
       addBubble("ai", "Speech recognition not supported. Please use Chrome or Edge.");
     } else {
 
+            let activeRecognition = null;
+
       function runOneListenCycle() {
         if (isProcessing) {
-          console.log("DEBUG: blocked re-entrant call, already processing");
+          // Second click = manually stop and process what was said so far
+          if (activeRecognition) {
+            console.log("DEBUG: manual stop triggered");
+            activeRecognition.manualStop = true;
+            activeRecognition.stop();
+          }
           return;
         }
         isProcessing = true;
-        startBtn.disabled = true;
-        startBtn.innerHTML = "<span class='pulse'></span> Listening...";
-
+        startBtn.innerHTML = "⏹️ Tap to stop";
         const recognition = new SpeechRecognitionCtor();
         recognition.lang = "en-IN";
         recognition.continuous = true;
@@ -264,25 +269,37 @@
           startBtn.innerHTML = "🎤 Speak (as the debtor)";
         };
 
-        recognition.onend = () => {
+                recognition.onend = () => {
           if (!resultHandled) {
-            // Mobile browsers sometimes end recognition early - try restarting a few times
+            if (recognition.manualStop) {
+              // User tapped stop manually - process whatever transcript we have
+              if (userBubble) {
+                resultHandled = true;
+                processTranscript(userBubble.innerText.replace("You (Debtor)", "").trim());
+              } else {
+                isProcessing = false;
+                startBtn.innerHTML = "🎤 Speak (as the debtor)";
+              }
+              return;
+            }
             if (restartAttempts < MAX_RESTARTS) {
               restartAttempts++;
-              console.log("DEBUG: recognition ended without final result, restart attempt", restartAttempts);
               try {
                 recognition.start();
                 return;
-              } catch (e) {
-                console.log("DEBUG restart failed:", e.message);
-              }
+              } catch (e) {}
             }
+            isProcessing = false;
+            startBtn.innerHTML = "🎤 Speak (as the debtor)";
+          }
+        };
             isProcessing = false;
             startBtn.disabled = false;
             startBtn.innerHTML = "🎤 Speak (as the debtor)";
           }
         };
 
+                activeRecognition = recognition;
         recognition.start();
       }
 
