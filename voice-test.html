@@ -179,6 +179,8 @@
 
         let resultHandled = false;
         let userBubble = null;
+        let restartAttempts = 0;
+        const MAX_RESTARTS = 3;
 
         recognition.onresult = async (event) => {
           let fullTranscript = "";
@@ -251,6 +253,11 @@
         };
 
         recognition.onerror = (event) => {
+          console.log("DEBUG recognition error:", event.error);
+          if (event.error === "no-speech" || event.error === "aborted") {
+            // Don't show a scary error for these - just let onend handle restart/cleanup
+            return;
+          }
           addBubble("ai", "Error: " + event.error);
           isProcessing = false;
           startBtn.disabled = false;
@@ -259,6 +266,17 @@
 
         recognition.onend = () => {
           if (!resultHandled) {
+            // Mobile browsers sometimes end recognition early - try restarting a few times
+            if (restartAttempts < MAX_RESTARTS) {
+              restartAttempts++;
+              console.log("DEBUG: recognition ended without final result, restart attempt", restartAttempts);
+              try {
+                recognition.start();
+                return;
+              } catch (e) {
+                console.log("DEBUG restart failed:", e.message);
+              }
+            }
             isProcessing = false;
             startBtn.disabled = false;
             startBtn.innerHTML = "🎤 Speak (as the debtor)";
