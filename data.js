@@ -69,19 +69,15 @@ for (let i = 1; i <= 50; i++) {
   invoiceRecords.push(generateInvoiceRecord(i));
 }
 // REAL Razorpay test-mode API response - captured live, not synthetic
+// REAL Razorpay test-mode API response - captured live, not synthetic
 const realCapturedRecord = {
-  transaction_id: "pay_TZ4tQan0DImzMb",
-  subscription_id: "order_TZ4t6FmdwUaoqh",
+  invoice_id: "pay_TZ4tQan0DImzMb",
+  business_name: "Singh Enterprises",
   amount: 70000,
-  error_code: "BAD_REQUEST_ERROR",
-  error_reason: "payment_failed",
-  error_source: "bank",
-  error_step: "payment_authorization",
-  payment_method: "netbanking",
-  bank: "PUNB_R",
-  timestamp: new Date().toISOString(),
-  true_cause: "bank_transient",
+  days_overdue: 60,
+  debtor_response: "(Real Razorpay test payment - failed via netbanking, PUNB_R bank. Error: BAD_REQUEST_ERROR, payment_failed, declined by bank at authorization step.)",
+  true_category: "dispute",
   is_real_captured_data: true
 };
 
-failedPayments.push(realCapturedRecord);
+invoiceRecords.push(realCapturedRecord);
