@@ -67,7 +67,7 @@
       box-shadow: 0 6px 18px rgba(232,93,76,0.35);
       transition: transform 0.15s ease;
     }
-    #startBtn:hover:not(:disabled) { transform: translateY(-2px); }
+    #startBtn:hover { transform: translateY(-2px); }
     #startBtn:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; }
 
     .hint { color: #999; font-size: 13px; margin-top: 14px; }
@@ -107,7 +107,7 @@
       width: 10px;
       height: 10px;
       border-radius: 50%;
-      background: #E85D4C;
+      background: white;
       margin-right: 6px;
       animation: pulse 1.2s infinite;
     }
@@ -123,7 +123,7 @@
   <div class="hero">
     <div class="badge">VASOOLI · LIVE VOICE AGENT</div>
     <h1>🎙️ AI Collections Call</h1>
-    <p>Speak as the debtor — the AI agent listens, reasons, and responds in real time.</p>
+    <p>Speak as the debtor — tap once to start, tap again to stop and send.</p>
   </div>
 
   <div class="container">
@@ -135,8 +135,8 @@
         <div><span>Days Overdue</span><b>60</b></div>
       </div>
 
-      <button id="startBtn">🎤 Speak (as the debtor)</button>
-      <p class="hint">Use headphones for best results</p>
+      <button id="startBtn">🎤 Tap to speak</button>
+      <p class="hint">Use headphones for best results. On mobile: tap to start, tap again when you're done speaking.</p>
 
       <div class="transcript-area" id="transcriptArea"></div>
 
@@ -149,6 +149,7 @@
 
     const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
     let isProcessing = false;
+    let activeRecognition = null;
 
     function addBubble(who, text) {
       const div = document.createElement("div");
@@ -158,15 +159,64 @@
       return div;
     }
 
-    if (!SpeechRecognitionCtor) {
-      addBubble("ai", "Speech recognition not supported. Please use Chrome or Edge.");
-    } else {
+    async function sendToAI(spokenText) {
+      startBtn.innerHTML = "🤔 Thinking...";
+      startBtn.disabled = true;
 
-            let activeRecognition = null;
+      try {
+        const response = await fetch("/api/converse", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            debtor_message: spokenText,
+            business_name: "Singh Enterprises",
+            amount: 70000,
+            days_overdue: 60
+          })
+        });
+        const data = await response.json();
+        console.log("DEBUG converse response:", JSON.stringify(data));
+        addBubble("ai", data.reply);
+
+        const utterance = new SpeechSynthesisUtterance(data.reply);
+        utterance.lang = "en-IN";
+
+        const voices = speechSynthesis.getVoices();
+        const maleVoice = voices.find(v => /male/i.test(v.name) && !/female/i.test(v.name)) ||
+                           voices.find(v => /david|mark|daniel|alex|rishi|ravi/i.test(v.name)) ||
+                           voices.find(v => v.lang === "en-IN" || v.lang === "hi-IN") ||
+                           voices[0];
+        if (maleVoice) utterance.voice = maleVoice;
+
+        utterance.onend = () => {
+          isProcessing = false;
+          startBtn.disabled = false;
+          startBtn.innerHTML = "🎤 Tap to speak";
+        };
+        utterance.onerror = () => {
+          isProcessing = false;
+          startBtn.disabled = false;
+          startBtn.innerHTML = "🎤 Tap to speak";
+        };
+        speechSynthesis.speak(utterance);
+
+      } catch (error) {
+        console.log("DEBUG converse catch error:", error.message);
+        addBubble("ai", "Sorry, I couldn't respond right now.");
+        isProcessing = false;
+        startBtn.disabled = false;
+        startBtn.innerHTML = "🎤 Tap to speak";
+      }
+    }
+
+    if (!SpeechRecognitionCtor) {
+      addBubble("ai", "Speech recognition isn't supported in this browser. Please use Chrome or Edge on Windows, Mac, or Android (not currently supported on iPhone/iPad due to Safari limitations).");
+      startBtn.disabled = true;
+    } else {
 
       function runOneListenCycle() {
         if (isProcessing) {
-          // Second click = manually stop and process what was said so far
+          // Second tap = manually stop and process what was said so far
           if (activeRecognition) {
             console.log("DEBUG: manual stop triggered");
             activeRecognition.manualStop = true;
@@ -174,132 +224,89 @@
           }
           return;
         }
+
         isProcessing = true;
-        startBtn.innerHTML = "⏹️ Tap to stop";
+        startBtn.innerHTML = "<span class='pulse'></span> Listening... (tap to stop)";
+
         const recognition = new SpeechRecognitionCtor();
         recognition.lang = "en-IN";
         recognition.continuous = true;
         recognition.interimResults = true;
         recognition.maxAlternatives = 1;
+        recognition.manualStop = false;
 
         let resultHandled = false;
         let userBubble = null;
+        let latestTranscript = "";
         let restartAttempts = 0;
-        const MAX_RESTARTS = 3;
+        const MAX_RESTARTS = 5;
 
-        recognition.onresult = async (event) => {
+        recognition.onresult = (event) => {
           let fullTranscript = "";
           for (let i = 0; i < event.results.length; i++) {
             fullTranscript += event.results[i][0].transcript;
           }
+          latestTranscript = fullTranscript;
+
           if (!userBubble) {
             userBubble = addBubble("user", fullTranscript);
           } else {
             userBubble.innerHTML = "<span class='who'>You (Debtor)</span>" + fullTranscript;
-          }
-
-          const lastResult = event.results[event.results.length - 1];
-          if (!lastResult.isFinal) return;
-
-          if (resultHandled) {
-            console.log("DEBUG: duplicate onresult ignored");
-            return;
-          }
-          resultHandled = true;
-          recognition.stop();
-
-          const spokenText = fullTranscript;
-          startBtn.innerHTML = "🤔 Thinking...";
-
-          try {
-            const response = await fetch("/api/converse", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                debtor_message: spokenText,
-                business_name: "Singh Enterprises",
-                amount: 70000,
-                days_overdue: 60
-              })
-            });
-            const data = await response.json();
-            console.log("DEBUG converse response:", JSON.stringify(data));
-            addBubble("ai", data.reply);
-
-            const utterance = new SpeechSynthesisUtterance(data.reply);
-            utterance.lang = "en-IN";
-
-            const voices = speechSynthesis.getVoices();
-            const maleVoice = voices.find(v => /male/i.test(v.name) && !/female/i.test(v.name)) ||
-                               voices.find(v => /david|mark|daniel|alex|rishi|ravi/i.test(v.name)) ||
-                               voices.find(v => v.lang === "en-IN" || v.lang === "hi-IN") ||
-                               voices[0];
-            if (maleVoice) utterance.voice = maleVoice;
-
-            utterance.onend = () => {
-              isProcessing = false;
-              startBtn.disabled = false;
-              startBtn.innerHTML = "🎤 Speak (as the debtor)";
-            };
-            utterance.onerror = () => {
-              isProcessing = false;
-              startBtn.disabled = false;
-              startBtn.innerHTML = "🎤 Speak (as the debtor)";
-            };
-            speechSynthesis.speak(utterance);
-
-          } catch (error) {
-            console.log("DEBUG converse catch error:", error.message);
-            addBubble("ai", "Sorry, I couldn't respond right now.");
-            isProcessing = false;
-            startBtn.disabled = false;
-            startBtn.innerHTML = "🎤 Speak (as the debtor)";
           }
         };
 
         recognition.onerror = (event) => {
           console.log("DEBUG recognition error:", event.error);
           if (event.error === "no-speech" || event.error === "aborted") {
-            // Don't show a scary error for these - just let onend handle restart/cleanup
             return;
           }
           addBubble("ai", "Error: " + event.error);
           isProcessing = false;
           startBtn.disabled = false;
-          startBtn.innerHTML = "🎤 Speak (as the debtor)";
+          startBtn.innerHTML = "🎤 Tap to speak";
         };
 
-                recognition.onend = () => {
-          if (!resultHandled) {
-            if (recognition.manualStop) {
-              // User tapped stop manually - process whatever transcript we have
-              if (userBubble) {
-                resultHandled = true;
-                processTranscript(userBubble.innerText.replace("You (Debtor)", "").trim());
-              } else {
-                isProcessing = false;
-                startBtn.innerHTML = "🎤 Speak (as the debtor)";
-              }
-              return;
+        recognition.onend = () => {
+          if (resultHandled) return;
+
+          if (recognition.manualStop) {
+            // User tapped stop - process whatever we captured so far
+            resultHandled = true;
+            if (latestTranscript.trim()) {
+              sendToAI(latestTranscript.trim());
+            } else {
+              addBubble("ai", "I didn't catch anything - please try again.");
+              isProcessing = false;
+              startBtn.disabled = false;
+              startBtn.innerHTML = "🎤 Tap to speak";
             }
-            if (restartAttempts < MAX_RESTARTS) {
-              restartAttempts++;
-              try {
-                recognition.start();
-                return;
-              } catch (e) {}
-            }
-            isProcessing = false;
-            startBtn.innerHTML = "🎤 Speak (as the debtor)";
+            return;
           }
-        };
+
+          // Recognition ended on its own (mobile often does this early) - restart automatically
+          if (restartAttempts < MAX_RESTARTS) {
+            restartAttempts++;
+            console.log("DEBUG: recognition ended, auto-restart attempt", restartAttempts);
+            try {
+              recognition.start();
+              return;
+            } catch (e) {
+              console.log("DEBUG restart failed:", e.message);
+            }
+          }
+
+          // Give up restarting - process whatever we have, or reset
+          resultHandled = true;
+          if (latestTranscript.trim()) {
+            sendToAI(latestTranscript.trim());
+          } else {
             isProcessing = false;
             startBtn.disabled = false;
-            startBtn.innerHTML = "🎤 Speak (as the debtor)";
+            startBtn.innerHTML = "🎤 Tap to speak";
           }
         };
 
-                activeRecognition = recognition;
+        activeRecognition = recognition;
         recognition.start();
       }
 
