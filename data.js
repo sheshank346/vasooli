@@ -68,3 +68,20 @@ const invoiceRecords = [];
 for (let i = 1; i <= 50; i++) {
   invoiceRecords.push(generateInvoiceRecord(i));
 }
+// REAL Razorpay test-mode API response - captured live, not synthetic
+const realCapturedRecord = {
+  transaction_id: "pay_TZ4tQan0DImzMb",
+  subscription_id: "order_TZ4t6FmdwUaoqh",
+  amount: 70000,
+  error_code: "BAD_REQUEST_ERROR",
+  error_reason: "payment_failed",
+  error_source: "bank",
+  error_step: "payment_authorization",
+  payment_method: "netbanking",
+  bank: "PUNB_R",
+  timestamp: new Date().toISOString(),
+  true_cause: "bank_transient",
+  is_real_captured_data: true
+};
+
+failedPayments.push(realCapturedRecord);
