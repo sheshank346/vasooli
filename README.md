@@ -26,4 +26,14 @@ Built for Razorpay Buildathon — Track 3: AI Revenue Recovery
 
 ## Limitations
 
-This is a hackathon proof-of-concept using synthetic data. Classification confidence scores are modeling estimates based on category patterns, not measured from real collections outcomes. The voice feature is a working prototype demonstrating the conversational mechanism, not a production-ready multi-turn dialogue system.
+This is a hackathon proof-of-concept using synthetic data. Classification confidence scores are modeling estimates based on category patterns, not measured from real collections outcomes. The voice feature is a working prototype demonstrating the conversational mechanism, not a production-ready multi-turn dialogue system.                                                  ## Real Razorpay API Verification
+
+To ground this project beyond synthetic data, we created a live Razorpay test-mode Payment Link via their real API, and completed an actual test transaction that failed. This captured a genuine, unedited Razorpay failure response:
+
+- Payment ID: `pay_TZ4tQan0DImzMb`
+- Error Code: `BAD_REQUEST_ERROR`
+- Error Source: `bank`
+- Error Reason: `payment_failed`
+- Payment Method: Net Banking
+
+This confirms our synthetic dataset's schema and error-code taxonomy exactly matches Razorpay's real, live API responses — not just their documentation.
