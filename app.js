@@ -1,4 +1,4 @@
-/ Renders the table and calls backend for AI classification
+// Renders the table and calls backend for AI classification
  
 // Number of records classified live via the real API (kept low to protect quota during demos).
 // The rest use a deterministic fallback derived from the record's true_category.
