@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Vasooli</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     * { box-sizing: border-box; }
     body {
@@ -66,6 +67,13 @@
       color: #1A1A2E;
       margin-top: 6px;
     }
+    .chart-card {
+      background: white;
+      border-radius: 14px;
+      padding: 22px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+      margin-bottom: 24px;
+    }
     .table-wrap {
       background: white;
       border-radius: 14px;
@@ -90,6 +98,24 @@
     .conf-high { color: #1a9c4b; font-weight: 700; }
     .conf-medium { color: #d68a10; font-weight: 700; }
     .conf-low { color: #d13c3c; font-weight: 700; }
+    .tag {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+    .tag-genuine_promise { background: #E3F7E9; color: #1a9c4b; }
+    .tag-evasive { background: #FFF4DE; color: #d68a10; }
+    .tag-dispute { background: #FDE8E8; color: #d13c3c; }
+    .tag-already_paid_claim { background: #E9ECFF; color: #3E51F5; }
+    .tag-unknown { background: #eee; color: #888; }
+    #loadingSpinner {
+      display: none;
+      text-align: center;
+      padding: 40px;
+      color: #888;
+    }
   </style>
 </head>
 <body>
@@ -103,6 +129,13 @@
   <div class="container">
 
     <div id="summary"></div>
+
+    <div class="chart-card">
+      <h3 style="margin-top:0;">Overdue Amount by Classification</h3>
+      <canvas id="categoryChart" height="90"></canvas>
+    </div>
+
+    <div id="loadingSpinner">Loading classifications...</div>
 
     <div class="table-wrap">
       <table id="invoiceTable">
