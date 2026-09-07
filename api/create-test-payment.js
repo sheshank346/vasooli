@@ -19,7 +19,6 @@ export default async function handler(req, res) {
         currency: "INR",
         description: "Vasooli test invoice - Singh Enterprises",
         customer: {
-                  customer: {
           name: "Singh Enterprises",
           email: "test@example.com",
           contact: "+919876543210"
