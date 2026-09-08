@@ -36,4 +36,4 @@ To ground this project beyond synthetic data, we created a live Razorpay test-mo
 - Error Reason: `payment_failed`
 - Payment Method: Net Banking
 
-This confirms our synthetic dataset's schema and error-code taxonomy exactly matches Razorpay's real, live API responses — not just their documentation.
+This confirms my synthetic dataset's schema and error-code taxonomy exactly matches Razorpay's real, live API responses — not just their documentation.
